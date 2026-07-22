@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="estilo.css">
+<style>
+    .mbody{padding:26px 30px 30px;}
+
+        .role-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+        .rc{border:1.5px solid var(--border);border-radius:12px;padding:13px;
+            text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+        .rc:hover{border-color:var(--blue);}
+        .rc.active{border-color:var(--orange);background:#FFF8F3;}
+        .rc .ri{font-size:24px;margin-bottom:5px;}
+        .rc .rn{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--text);}
+        .rc .rd{font-size:11px;color:var(--muted);margin-top:1px;}
+
+        .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+        .pw{position:relative;}
+        .ptog{position:absolute;right:11px;top:50%;transform:translateY(-50%);
+            background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:3px;}
+
+        .divid{display:flex;align-items:center;gap:10px;margin:16px 0;}
+        .divid::before,.divid::after{content:'';flex:1;height:1px;background:var(--border);}
+        .divid span{font-size:12px;color:var(--muted);font-weight:600;}
+
+        .btn-goog{width:100%;background:var(--white);border:1.5px solid var(--border);
+            border-radius:10px;padding:11px;font-family:'Montserrat',sans-serif;font-size:13px;
+            font-weight:600;color:var(--text);cursor:pointer;
+            display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;}
+        .btn-goog:hover{border-color:#4285F4;background:#F8FAFF;}
+
+        .mswitch{text-align:center;margin-top:16px;font-size:13px;color:var(--muted);}
+        .mswitch a{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none;}
+        .mswitch a:hover{text-decoration:underline;}
+
+        #spanel{display:none;text-align:center;padding:8px 0 4px;}
+        .sc{width:78px;height:78px;background:linear-gradient(135deg,#10B981,#059669);
+            border-radius:50%;margin:0 auto 18px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:34px;color:var(--white);
+            animation:popIn .4s ease both;box-shadow:0 8px 24px rgba(16,185,129,.35);}
+        @keyframes popIn{0%{transform:scale(0);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+        .st2{font-family:'Montserrat',sans-serif;font-size:24px;font-weight:800;
+            color:var(--text);margin-bottom:8px;}
+        .sbadge{display:inline-flex;align-items:center;gap:8px;
+            background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
+            padding:7px 18px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;}
+        .ssub{font-size:14px;color:var(--muted);line-height:1.65;
+            max-width:300px;margin:0 auto 22px;}
+        .btn-start{width:100%;background:linear-gradient(135deg,var(--orange),var(--orange-dark));
+            color:var(--white);border:none;border-radius:10px;padding:13px;
+            font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;
+            cursor:pointer;transition:all .2s;}
+        .btn-start:hover{transform:translateY(-1px);}
+
+        .errmsg{font-size:11px;color:var(--error);margin-top:4px;display:none;}
+        .errmsg.show{display:block;}
+
+        @media(max-width:768px){
+            nav{padding:0 16px;}
+            #hero{padding:88px 20px 48px;}
+            .hero-truck{display:none;}
+            .hero-stats{flex-wrap:wrap;}
+            .hs{border-bottom:1px solid rgba(255,255,255,.1);border-right:none;}
+            .hs:last-child{border-bottom:none;}
+            #como,#modos,#calculadora,#planos{padding:72px 20px;}
+            .modes,.frow{grid-template-columns:1fr;}
+            .strip{grid-template-columns:1fr;padding:28px 20px;gap:20px;}
+            footer{flex-direction:column;gap:8px;padding:24px 20px;}
+            .mbody{padding:18px 18px 22px;}
+            .mhdr{padding:20px 18px 16px;}
+        }
+</style>
+
+
+
+
+
+
+
+</head>
+<body>
+   <div class="mbody">     
+<div id="pLogin">
+<div class="field">
+<label for="lEmail">Email</label>
+<input autocomplete="email" id="lEmail" placeholder="teu@email.com" type="email"/>
+<div class="errmsg" id="lEmailErr">Insere um email válido.</div>
+</div>
+<div class="field">
+<label for="lPass">Password</label>
+<div class="pw">
+<input autocomplete="current-password" id="lPass" placeholder="" type="password"/>
+<button class="ptog" onclick="togPass('lPass',this)" tabindex="-1" type="button">👁</button>
+</div>
+<div class="errmsg" id="lPassErr">A password é obrigatória.</div>
+</div>
+<button class="btn-sub" id="btnLogin" onclick="doLogin()">Entrar na conta</button><div class="errmsg" id="loginError"></div>
+<div class="divid"><span>ou</span></div>
+<button class="btn-goog" onclick="doGoogle()">
+<svg height="18" viewbox="0 0 24 24" width="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+                    Continuar com Google
+                </button>
+<div class="mswitch">Não tens conta? <a onclick="switchTo('register')">Registar agora</a></div>
+</div>
+ REGISTER 
+<div id="pReg" style="display:none;">
+<p style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Quero registar-me como...</p>
+<div class="role-row">
+<div class="rc active" id="rcClient" onclick="setRole('client')">
+<div class="ri">🏠</div><div class="rn">Cliente</div><div class="rd">Preciso de frete</div>
+</div>
+<div class="rc" id="rcDriver" onclick="setRole('driver')">
+<div class="ri">🚚</div><div class="rn">Motorista</div><div class="rd">Tenho caminhão</div>
+</div>
+</div>
+<div class="frow">
+<div class="field"><label for="rNome">Nome</label><input autocomplete="given-name" id="rNome" placeholder="João" type="text"/><div class="errmsg" id="rNomeErr">Campo obrigatório.</div></div>
+<div class="field"><label for="rAp">Apelido</label><input autocomplete="family-name" id="rAp" placeholder="Silva" type="text"/><div class="errmsg" id="rApErr">Campo obrigatório.</div></div>
+</div>
+<div class="field"><label for="rEmail">Email</label><input autocomplete="email" id="rEmail" placeholder="o.teu@email.com" type="email"/><div class="errmsg" id="rEmailErr">Insere um email válido.</div></div>
+<div class="field"><label for="rTel">Telemóvel</label><input autocomplete="tel" id="rTel" placeholder="+351 9xx xxx xxx" type="tel"/><div class="errmsg" id="rTelErr">Insere um número válido.</div></div>
+<div class="field">
+<label for="rPass">Password</label>
+<div class="pw"><input autocomplete="new-password" id="rPass" placeholder="Mínimo 8 caracteres" type="password"/><button class="ptog" onclick="togPass('rPass',this)" tabindex="-1" type="button">👁</button></div>
+<div class="errmsg" id="rPassErr">Mínimo 8 caracteres.</div>
+</div>
+<div id="driverExtra" style="display:none;">
+<div class="field"><label for="rVeh">Tipo de veículo</label>
+<select id="rVeh"><option value="">Seleciona o tipo de veículo</option><option>Moto</option><option>Carrinha (até 500kg)</option><option>Caminhão (até 2t)</option><option>Caminhão grande (3.5t+)</option></select>
+</div>
+<div class="field"><label for="rDist">Distrito de operação</label>
+<select id="rDist"><option value="">Seleciona o distrito</option><option>Lisboa</option><option>Porto</option><option>Braga</option><option>Setúbal</option><option>Aveiro</option><option>Coimbra</option><option>Faro</option><option>Leiria</option><option>Évora</option></select>
+</div>
+</div>
+<button class="btn-sub" id="btnReg" onclick="doRegister()">Criar conta grátis →</button><div class="errmsg" id="registerError"></div>
+<div class="divid"><span>ou</span></div>
+<button class="btn-goog" onclick="doGoogle()">
+<svg height="18" viewbox="0 0 24 24" width="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+                    Continuar com Google
+                </button>
+<div class="mswitch">Já tens conta? <a onclick="switchTo('login')">Entrar</a></div>
+</div>
+
+
+            <!-- SUCCESS -->
+            <div id="spanel">
+                <div class="sc">✓</div>
+                <div class="st2" id="sTitle">Conta criada!</div>
+                <div class="sbadge" id="sBadge">🏠 Cliente FRETEX</div>
+                <p class="ssub" id="sMsg">Bem-vindo(a) à FRETEX! A tua conta está pronta para o primeiro frete.</p>
+                <button class="btn-start" onclick="closeModal()">Começar a usar →</button>
+            </div>
+
+        </div>                                                                            
+    </div>
+</div>
+
+</body>
+</html>
+            

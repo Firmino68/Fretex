@@ -1,0 +1,251 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║         🚚 FRETEX - INSTALAÇÃO RÁPIDA COM XAMPP/MySQL (10 MIN)           ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PASSO 1: INSTALAR XAMPP
+═══════════════════════════════════════════════════════════════════════════
+
+1. Descarregue: https://www.apachefriends.org/
+2. Escolha: XAMPP for Windows (ou seu sistema operativo)
+3. Execute o instalador
+4. Deixe em C:\xampp (padrão)
+5. Clique Next → Install → Finish
+
+(2 minutos)
+
+
+PASSO 2: INICIAR XAMPP
+═══════════════════════════════════════════════════════════════════════════
+
+1. Abra: XAMPP Control Panel (Desktop ou Menu)
+2. Procure: MySQL
+3. Clique: Start (botão verde)
+4. Espere aparecer "running" (verde)
+
+(1 minuto)
+
+
+PASSO 3: CRIAR DATABASE
+═══════════════════════════════════════════════════════════════════════════
+
+1. Abra navegador: http://localhost/phpmyadmin
+2. No topo, clique: "New" ou "Novo"
+3. Database name: fretex
+4. Collation: utf8mb4_unicode_ci (deixe padrão)
+5. Clique: Create
+
+✅ Database criada!
+
+(2 minutos)
+
+
+PASSO 4: EXTRAIR ZIP
+═══════════════════════════════════════════════════════════════════════════
+
+1. Clique direito no ZIP
+2. Selecione: "Extrair para..."
+3. Escolha uma pasta (ex: C:\Users\[seu]\Documents\fretex)
+
+(1 minuto)
+
+
+PASSO 5: INSTALAR DEPENDÊNCIAS
+═══════════════════════════════════════════════════════════════════════════
+
+1. Abra PowerShell/Terminal na pasta extraída
+2. Execute: npm install
+
+(3 minutos - depende da internet)
+
+
+PASSO 6: CONFIGURAR .env
+═══════════════════════════════════════════════════════════════════════════
+
+Abra ficheiro .env
+
+Verifique (já vem com defaults):
+
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASSWORD=
+    DB_NAME=fretex
+
+⚠️ IMPORTANTE: Adicione suas credenciais EmailJS:
+
+    EMAILJS_PUBLIC_KEY=sua_public_key
+    EMAILJS_SERVICE_ID=seu_service_id
+
+Obtenha em: https://www.emailjs.com
+
+(2 minutos)
+
+
+PASSO 7: INICIAR BACKEND
+═══════════════════════════════════════════════════════════════════════════
+
+Na pasta do projeto, execute:
+
+    npm start
+
+Deverá ver:
+
+    ╔══════════════════════════════════════════╗
+    ║        🚚 FRETEX Backend Iniciado        ║
+    ╠══════════════════════════════════════════╣
+    ║  Server: http://localhost:3000           ║
+    ║  WebSocket: ws://localhost:3000          ║
+    ║  Database: MySQL (XAMPP)                 ║
+    ║  phpMyAdmin: http://localhost/phpmyadmin ║
+    ╚══════════════════════════════════════════╝
+
+✅ Backend rodando!
+
+(1 minuto)
+
+
+PASSO 8: ABRIR NO NAVEGADOR
+═══════════════════════════════════════════════════════════════════════════
+
+Abra em 2 abas/janelas:
+
+    http://localhost:3000/FRETEX.html
+
+Aba 1: Registar como CLIENTE
+Aba 2: Registar como MOTORISTA
+
+(2 minutos)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+VERIFICAR DADOS NO PHPMYADMIN
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra: http://localhost/phpmyadmin
+2. Esquerda: fretex
+3. Tabelas:
+   ✅ usuarios → Browse (ver utilizadores registados)
+   ✅ fretes → Browse (ver fretes criados)
+   ✅ mensagens → Browse (ver mensagens)
+
+Todos os dados guardados em MySQL! 🎉
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TESTAR FLUXO COMPLETO
+═══════════════════════════════════════════════════════════════════════════════
+
+Aba 1 (Cliente):
+  1. Registar
+  2. Novo Frete
+  3. Preencher dados
+  4. Solicitar
+
+Aba 2 (Motorista):
+  1. Registar
+  2. Ver "Novo Frete!" notificação
+  3. Clique "Aceitar"
+  4. Cliente recebe email
+
+✅ SUCESSO!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ "Connection refused" (3306)
+  → XAMPP Control Panel → MySQL → Start
+
+❌ "Database fretex not found"
+  → phpMyAdmin → Crie database "fretex"
+
+❌ "npm: command not found"
+  → Instale Node.js: nodejs.org
+
+❌ "Port 3000 already in use"
+  → Edite .env: PORT=3001
+
+❌ "EmailJS not working"
+  → Verifique credenciais no .env
+  → Teste: console.log(testarEmailJS())
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Leia: docs/GUIA_XAMPP_MYSQL.md (detalhado)
+2. Leia: docs/QUICK_START.md (resumido)
+3. Consulte: docs/TESTES.md (validação)
+4. Customize para seu negócio!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+FICHEIROS IMPORTANTES
+═══════════════════════════════════════════════════════════════════════════════
+
+README.md                      Documentação geral
+INSTALACAO_RAPIDA.txt         Este arquivo
+docs/GUIA_XAMPP_MYSQL.md      Guia detalhado
+docs/QUICK_START.md           Resumido
+.env                          Configuração (EDITE!)
+server.js                     Backend MySQL
+package.json                  Dependências
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+VANTAGENS DO XAMPP + MYSQL
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ Muito fácil instalar (1 ficheiro)
+✅ Interface gráfica (phpMyAdmin)
+✅ Mesma performance que MongoDB
+✅ Dados sempre visíveis
+✅ Sem linha de comando complexa
+✅ Familiar se conhece PHP
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ACESSOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Aplicação:    http://localhost:3000/FRETEX.html
+phpMyAdmin:   http://localhost/phpmyadmin
+Backend:      http://localhost:3000
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+RESUMO DOS 8 PASSOS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Instalar XAMPP           (2 min)
+2. Iniciar MySQL            (1 min)
+3. Criar database fretex    (2 min)
+4. Extrair ZIP              (1 min)
+5. npm install              (3 min)
+6. Editar .env              (2 min)
+7. npm start                (1 min)
+8. Testar no navegador      (2 min)
+
+TOTAL: 14 MINUTOS ⏱️
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  ✅ PRONTO PARA COMEÇAR! 🚀                              ║
+║                                                                            ║
+║            Siga os 8 passos acima em menos de 15 minutos!               ║
+║                                                                            ║
+║                    Desenvolvido com ❤️ para Portugal                     ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝

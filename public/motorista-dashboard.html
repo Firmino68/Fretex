@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard Motorista — FRETEX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --blue: #1A3A8F;
+            --blue-dark: #122B6E;
+            --blue-light: #2348B0;
+            --orange: #F57C20;
+            --orange-dark: #D96910;
+            --white: #FFFFFF;
+            --bg: #F4F6FA;
+            --text: #1A1A2E;
+            --muted: #6B7280;
+            --border: #E2E8F0;
+            --error: #EF4444;
+            --success: #10B981;
+            --warning: #F59E0B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--orange);
+        }
+
+        .nav-center {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 4px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-toggle.online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+
+        .logout-btn:hover {
+            color: var(--orange-dark);
+        }
+
+        /* MAIN LAYOUT */
+        .dashboard {
+            margin-top: 68px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: calc(100vh - 68px);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 68px);
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            background: var(--bg);
+            color: var(--orange);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, rgba(245, 124, 32, 0.1), rgba(245, 124, 32, 0.05));
+            border-left: 3px solid var(--orange);
+            padding-left: calc(1rem - 3px);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 68px);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--orange);
+            box-shadow: 0 8px 24px rgba(245, 124, 32, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ORDERS */
+        .orders-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .order-card {
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .order-card:hover {
+            border-color: var(--orange);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .order-id {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pendente {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-aceito {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+        }
+
+        .status-em_andamento {
+            background: rgba(245, 124, 32, 0.1);
+            color: var(--orange);
+        }
+
+        .status-entregue {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-block {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .detail-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .order-price {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--orange);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn-accept {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-accept:hover {
+            background: #059669;
+        }
+
+        .btn-details {
+            background: var(--blue);
+            color: var(--white);
+        }
+
+        .btn-details:hover {
+            background: var(--blue-dark);
+        }
+
+        .btn-complete {
+            background: var(--orange);
+            color: var(--white);
+        }
+
+        .btn-complete:hover {
+            background: var(--orange-dark);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* FORM */
+        .form-container {
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--white);
+        }
+
+        .form-input:disabled {
+            background: var(--bg);
+            cursor: not-allowed;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+            color: var(--white);
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 0 1rem;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .nav-center {
+                display: none;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .order-details {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="#" class="logo">FRE<span>TEX</span></a>
+        <div class="nav-center">
+            <a class="nav-link active" onclick="showSection('dashboard')">Dashboard</a>
+            <a class="nav-link" onclick="showSection('pedidos')">Pedidos Disponíveis</a>
+            <a class="nav-link" onclick="showSection('historico')">Histórico</a>
+            <a class="nav-link" onclick="showSection('perfil')">Perfil</a>
+        </div>
+        <div class="nav-right">
+            <div class="status-toggle online" id="statusToggle" onclick="toggleStatus()">
+                <div class="status-dot"></div>
+                <span id="statusText">Online</span>
+            </div>
+            <div class="avatar" id="userInitial">M</div>
+            <button class="logout-btn" onclick="logout()">Sair</button>
+        </div>
+    </nav>
+
+    <div class="dashboard">
+
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Menu</div>
+                <div class="sidebar-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
+                <div class="sidebar-item" onclick="showSection('pedidos')">📦 Pedidos Disponíveis</div>
+                <div class="sidebar-item" onclick="showSection('historico')">📋 Histórico</div>
+                <div class="sidebar-item" onclick="showSection('perfil')">👤 Perfil</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+
+            <div id="dashboard" class="section active">
+                <div class="section-header">
+                    <h1 class="section-title">Bem-vindo! 👋</h1>
+                    <p class="section-subtitle" id="greeting"></p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-value" id="totalOrders">0</div>
+                        <div class="stat-label">Entregas Totais</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="completedOrders">0</div>
+                        <div class="stat-label">Concluídas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-value" id="activeOrders">0</div>
+                        <div class="stat-label">Em Andamento</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value" id="totalEarnings">0€</div>
+                        <div class="stat-label">Ganhos Totais</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="rating">5.0</div>
+                        <div class="stat-label">Avaliação</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="thisWeekEarnings">0€</div>
+                        <div class="stat-label">Esta Semana</div>
+                    </div>
+                </div>
+
+                <h2 class="form-title">🚚 Pedidos Disponíveis Agora</h2>
+                <div class="orders-container" id="availableOrders"></div>
+            </div>
+
+            <div id="pedidos" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Pedidos Disponíveis</h1>
+                    <p class="section-subtitle">Aceita pedidos e começa a ganhar</p>
+                </div>
+                <div class="orders-container" id="pedidosList"></div>
+            </div>
+
+            <div id="historico" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Histórico de Entregas</h1>
+                    <p class="section-subtitle">Todas as tuas entregas realizadas</p>
+                </div>
+                <div class="orders-container" id="historicoList"></div>
+            </div>
+
+            <div id="perfil" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Meu Perfil</h1>
+                    <p class="section-subtitle">Informações pessoais</p>
+                </div>
+
+                <div class="form-container">
+                    <h2 class="form-title">Informações Pessoais</h2>
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-input" id="inputNome" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="inputEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telemóvel</label>
+                        <input type="tel" class="form-input" id="inputTel" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Veículo</label>
+                        <input type="text" class="form-input" id="inputVeiculo" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Membro desde</label>
+                        <input type="text" class="form-input" id="inputData" readonly>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detalhes do Pedido</h2>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let usuarioAtual = null;
+        let pedidosDisponiveis = [];
+        let pedidosAceitos = [];
+        let isOnline = true;
+
+      
+            usuarioAtual = JSON.parse(userData);
+
+            // Carregar pedidos aceitos do motorista
+            const pedidosData = localStorage.getItem('pedidosMotorista_' + usuarioAtual.email);
+            pedidosAceitos = pedidosData ? JSON.parse(pedidosData) : [];
+
+            // Carregar pedidos disponíveis de todos os clientes
+            carregarPedidosDisponiveis();
+
+            atualizarUI();
+            atualizarStats();
+
+        // Carregar pedidos de todos os clientes
+        function carregarPedidosDisponiveis() {
+            pedidosDisponiveis = [];
+            
+            // Procurar em todas as contas de clientes
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                
+                if (key.startsWith('pedidos_')) {
+                    const email = key.replace('pedidos_', '');
+                    const pedidos = JSON.parse(localStorage.getItem(key));
+                    
+                    // Adicionar apenas pedidos pendentes
+                    pedidos.forEach(p => {
+                        if (p.status === 'pendente') {
+                            pedidosDisponiveis.push(p);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Atualizar UI
+        function atualizarUI() {
+            const inicial = usuarioAtual.nome.charAt(0).toUpperCase();
+            document.getElementById('userInitial').textContent = inicial;
+            document.getElementById('inputNome').value = usuarioAtual.nome;
+            document.getElementById('inputEmail').value = usuarioAtual.email;
+            document.getElementById('inputTel').value = usuarioAtual.tel;
+
+            const dataCriacao = new Date(usuarioAtual.dataCriacao);
+            document.getElementById('inputData').value = dataCriacao.toLocaleDateString('pt-PT');
+
+            // Greeting
+            const hora = new Date().getHours();
+            let saudacao = 'Bom dia';
+            if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
+            if (hora >= 18) saudacao = 'Boa noite';
+            document.getElementById('greeting').textContent = `${saudacao}, ${usuarioAtual.nome.split(' ')[0]}! 😊`;
+        }
+
+        // Atualizar estatísticas
+        function atualizarStats() {
+            const total = pedidosAceitos.length;
+            const concluidos = pedidosAceitos.filter(p => p.status === 'entregue').length;
+            const emAndamento = pedidosAceitos.filter(p => p.status === 'em_andamento').length;
+            const ganhos = pedidosAceitos.reduce((sum, p) => sum + (p.preco * 0.8), 0);
+            const ganhosSemanais = pedidosAceitos.filter(p => {
+                const data = new Date(p.dataCriacao);
+                const semana = new Date();
+                text = semana.setDate(semana.getDate() - 7);
+                return data > semana;
+            }).reduce((sum, p) => sum + (p.preco * 0.8), 0);
+
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('completedOrders').textContent = concluidos;
+            document.getElementById('activeOrders').textContent = emAndamento;
+            document.getElementById('totalEarnings').textContent = ganhos.toFixed(2) + '€';
+            document.getElementById('thisWeekEarnings').textContent = ganhosSemanais.toFixed(2) + '€';
+
+            atualizarPedidosUI();
+            atualizarHistorico();
+        }
+
+        // Seções Dinâmicas (Sidebar / Nav)
+        function showSection(secao) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(l => l.classList.remove('active'));
+
+            document.getElementById(secao).classList.add('active');
+
+            const navLink = Array.from(document.querySelectorAll('.nav-link')).find(l => l.textContent.includes(
+                secao === 'dashboard' ? 'Dashboard' :
+                secao === 'pedidos' ? 'Pedidos' :
+                secao === 'historico' ? 'Histórico' : 'Perfil'
+            ));
+            if (navLink) navLink.classList.add('active');
+
+            const sidebarItem = Array.from(document.querySelectorAll('.sidebar-item')).find(l => l.textContent.includes(
+                secao === 'dashboard' ? 'Dashboard' :
+                secao === 'pedidos' ? 'Disponíveis' :
+                secao === 'historico' ? 'Histórico' : 'Perfil'
+            ));
+            if (sidebarItem) sidebarItem.classList.add('active');
+        }
+
+        // Toggle status Online/Offline
+        function toggleStatus() {
+            isOnline = !isOnline;
+            const toggle = document.getElementById('statusToggle');
+            const text = document.getElementById('statusText');
+
+            if (isOnline) {
+                toggle.classList.add('online');
+                text.textContent = 'Online';
+            } else {
+                toggle.classList.remove('online');
+                text.textContent = 'Offline';
+            }
+        }
+
+        // Logout corrigido
+        function logout() {
+            if (confirm('Deseja sair da sua conta?')) {
+                localStorage.removeItem('usuarioAtual');
+                window.location.href = 'fretex-login.html';
+            }
+        }
+
+        // Atualizar pedidos disponíveis
+        function atualizarPedidosUI() {
+            const containerAvailable = document.getElementById('availableOrders');
+            const containerAll = document.getElementById('pedidosList');
+
+            const disponiveis = pedidosDisponiveis.slice(0, 3);
+
+            if (disponiveis.length === 0) {
+                containerAvailable.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem pedidos</div><div class="empty-text">Aguardando novos fretes</div></div>';
+            } else {
+                containerAvailable.innerHTML = disponiveis.map(p => renderizarOrderCard(p, true)).join('');
+            }
+
+            if (pedidosDisponiveis.length === 0) {
+                containerAll.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem pedidos disponíveis</div><div class="empty-text">Verifique mais tarde</div></div>';
+            } else {
+                containerAll.innerHTML = pedidosDisponiveis.map(p => renderizarOrderCard(p, true)).join('');
+            }
+        }
+
+        // Atualizar histórico
+        function atualizarHistorico() {
+            const container = document.getElementById('historicoList');
+            const concluidos = pedidosAceitos.filter(p => p.status === 'entregue');
+
+            if (concluidos.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem entregas</div><div class="empty-text">Aceita pedidos para começar a ganhar</div></div>';
+            } else {
+                container.innerHTML = concluidos.map(p => renderizarOrderCard(p, false)).join('');
+            }
+        }
+
+        // Renderizar card de pedido
+        function renderizarOrderCard(p, mostarBotaoAceitar) {
+            const ganhosMotorista = (p.preco * 0.8).toFixed(2);
+            
+            return `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">${p.id}</span>
+                        <span class="order-status status-${p.status}">${p.status.replace('_', ' ').toUpperCase()}</span>
+                    </div>
+                    <div class="order-details">
+                        <div class="detail-block">
+                            <div class="detail-icon">📍</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Origem</div>
+                                <div class="detail-value">${p.origem}</div>
+                            </div>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-icon">🎯</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Destino</div>
+                                <div class="detail-value">${p.destino}</div>
+                            </div>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-icon">📦</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Carga</div>
+                                <div class="detail-value">${p.descricao}</div>
+                            </div>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-icon">💰</div>
+                            <div class="detail-content">
+                                <div class="detail-label">Seu Ganho</div>
+                                <div class="detail-value" style="color: var(--success); font-weight: 800;">${ganhosMotorista}€</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <span class="order-price">${p.preco.toFixed(2)}€</span>
+                        <div class="order-actions">
+                            ${mostarBotaoAceitar ? `<button class="btn-small btn-accept" onclick="aceitarPedido('${p.id}')">Aceitar</button>` : ''}
+                            <button class="btn-small btn-details" onclick="verDetalhes('${p.id}')">Detalhes</button>
+                            ${p.status === 'em_andamento' ? `<button class="btn-small btn-complete" onclick="completarPedido('${p.id}')">Finalizar</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Aceitar pedido
+        function aceitarPedido(pedidoId) {
+            const pedido = pedidosDisponiveis.find(p => p.id === pedidoId);
+            if (!pedido) return;
+
+            pedido.status = 'aceito';
+            pedidosAceitos.unshift(pedido);
+
+            localStorage.setItem('pedidosMotorista_' + usuarioAtual.email, JSON.stringify(pedidosAceitos));
+            pedidosDisponiveis = pedidosDisponiveis.filter(p => p.id !== pedidoId);
+
+            setTimeout(() => {
+                const indice = pedidosAceitos.findIndex(p => p.id === pedidoId);
+                if (indice !== -1) {
+                    pedidosAceitos[indice].status = 'em_andamento';
+                    localStorage.setItem('pedidosMotorista_' + usuarioAtual.email, JSON.stringify(pedidosAceitos));
+                    atualizarStats();
+                }
+            }, 3000);
+
+            atualizarStats();
+            alert('✅ Pedido aceito! Dirija-se à origem');
+        }
+
+        // Completar pedido
+        function completarPedido(pedidoId) {
+            if (confirm('Confirma que completou esta entrega?')) {
+                const indice = pedidosAceitos.findIndex(p => p.id === pedidoId);
+                if (indice !== -1) {
+                    pedidosAceitos[indice].status = 'entregue';
+                    localStorage.setItem('pedidosMotorista_' + usuarioAtual.email, JSON.stringify(pedidosAceitos));
+                    atualizarStats();
+                    alert('🎉 Entrega concluída! Ganhos: €' + (pedidosAceitos[indice].preco * 0.8).toFixed(2));
+                }
+            }
+        }
+
+        document.getElementById('modalOverlay')?.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // Inicialização
+        carregarDados();
+    </script>
+
+</body>
+</html>
