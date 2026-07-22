@@ -162,5 +162,4 @@ Ver dados em **phpMyAdmin**: http://localhost/phpmyadmin
 
 ---
 
-**Desenvolvido com ❤️ para Portugal**  
-**Versão 2.0 - Junho 2024**
+
