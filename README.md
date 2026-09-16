@@ -1,166 +1,141 @@
 # 🚚 FRETEX - Plataforma de Logística em Tempo Real
-## Versão XAMPP/MySQL
 
-Aplicação web de fretes com Socket.IO em tempo real, **MySQL (XAMPP)** e EmailJS.
+## Versão MongoDB
+
+Aplicação web de gestão de fretes com comunicação em tempo real através de **Socket.IO**, base de dados **MongoDB** e integração com **EmailJS**.
 
 **Versão:** 2.0  
-**Database:** MySQL (XAMPP)  
+**Base de Dados:** MongoDB  
 **Linguagem:** Português (Portugal)  
+**Backend:** Node.js + Express.js  
+**Comunicação em tempo real:** Socket.IO  
 **Status:** ✅ Pronto para Produção
 
 ---
 
-## 🚀 Quick Start (10 minutos)
+## 📋 Índice
 
-### 1. Instalar XAMPP
+- [Sobre o Projeto](#-sobre-o-projeto)
+- [Funcionalidades](#-funcionalidades)
+- [Tecnologias](#-tecnologias)
+- [Requisitos](#-requisitos)
+- [Instalação](#-instalação)
+- [Configuração do MongoDB](#-configuração-do-mongodb)
+- [Configuração do Ambiente](#-configuração-do-ambiente)
+- [Executar o Projeto](#-executar-o-projeto)
+- [Acessos Úteis](#-acessos-úteis)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Modelos MongoDB](#-modelos-mongodb)
+- [Testes](#-testes)
+- [Rastreamento GPS](#-rastreamento-gps)
+- [Comunicação em Tempo Real](#-comunicação-em-tempo-real)
+- [EmailJS](#-emailjs)
+- [Segurança](#-segurança)
+- [Resolução de Problemas](#-resolução-de-problemas)
+- [Desenvolvimento](#-desenvolvimento)
+- [Licença](#-licença)
 
-https://www.apachefriends.org/
+---
 
-Escolha: **XAMPP for Windows** (ou seu SO)
+## 📌 Sobre o Projeto
 
-### 2. Iniciar XAMPP
+O **FRETEX** é uma plataforma web de logística desenvolvida para facilitar a criação, gestão e acompanhamento de fretes em tempo real.
 
-Abra: **XAMPP Control Panel**
-- Clique **Start** em **MySQL**
+A plataforma permite a comunicação entre **clientes** e **motoristas**, disponibilizando funcionalidades como:
 
-### 3. Criar Database
+- Criação de fretes
+- Aceitação de fretes
+- Comunicação em tempo real
+- Chat entre utilizadores
+- Rastreamento GPS
+- Registo de trajetórias
+- Notificações
+- Gestão de utilizadores
+- Integração com EmailJS
 
-Abra: http://localhost/phpmyadmin
-- Clique **New**
-- Database name: `fretex`
-- Clique **Create**
+O sistema utiliza **MongoDB** como base de dados e **MongoDB Compass** como ferramenta opcional para visualizar e administrar os dados.
 
-### 4. Instalar Dependências
+---
+
+# 🚀 Funcionalidades
+
+### 👤 Autenticação
+
+- Registo de utilizadores
+- Login
+- Diferenciação entre Cliente e Motorista
+- Validação de email
+- Gestão de sessão
+
+### 📦 Gestão de Fretes
+
+- Criar novos fretes
+- Consultar fretes disponíveis
+- Aceitar fretes
+- Acompanhar o estado do frete
+- Atualização em tempo real
+
+### 💬 Chat
+
+- Comunicação entre cliente e motorista
+- Mensagens em tempo real
+- Histórico de mensagens armazenado na base de dados
+
+### 📍 Rastreamento GPS
+
+- Obtenção da localização do motorista
+- Atualização da posição em tempo real
+- Acompanhamento da trajetória
+- Registo de pontos GPS
+- Visualização da evolução do percurso
+
+### 📧 Email
+
+Integração com **EmailJS** para envio de notificações por email.
+
+### 📱 Interface
+
+- Interface responsiva
+- Compatível com dispositivos móveis
+- Dashboard para clientes
+- Dashboard para motoristas
+
+---
+
+# 🛠️ Tecnologias
+
+## Backend
+
+- **Node.js**
+- **Express.js**
+- **Socket.IO**
+- **MongoDB**
+- **Mongoose**
+
+## Frontend
+
+- **HTML5**
+- **CSS3**
+- **JavaScript**
+- **Socket.IO Client**
+
+## Serviços
+
+- **MongoDB**
+- **MongoDB Compass**
+- **EmailJS**
+
+---
+
+# 💻 Requisitos
+
+Antes de executar o projeto, instala os seguintes componentes:
+
+### Node.js
+
+É necessário ter o Node.js instalado.
+
+Verificar a instalação:
 
 ```bash
-npm install
-```
-
-### 5. Configurar .env
-
-Edite `.env`:
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=fretex
-
-EMAILJS_PUBLIC_KEY=sua_public_key
-EMAILJS_SERVICE_ID=seu_service_id
-```
-
-### 6. Iniciar Backend
-
-```bash
-npm start
-```
-
-### 7. Abrir no Navegador
-
-```
-http://localhost:3000/FRETEX.html
-```
-
----
-
-## 📖 Documentação
-
-- **[GUIA_XAMPP_MYSQL.md](docs/GUIA_XAMPP_MYSQL.md)** - Setup XAMPP/MySQL detalhado
-- **[QUICK_START.md](docs/QUICK_START.md)** - Resumo rápido
-- **[TESTES.md](docs/TESTES.md)** - Plano de testes
-
----
-
-## 📂 Estrutura do Projeto
-
-```
-fretex-xampp-mysql/
-├── server.js                    Backend (MySQL)
-├── package.json                 Dependências
-├── .env                        Configuração
-├── README.md                   Este arquivo
-│
-├── public/
-│   ├── FRETEX.html            Landing + Login
-│   ├── cliente-dashboard.html Dashboard Cliente
-│   ├── motorista-dashboard.html Dashboard Motorista
-│   ├── estilo.css             Estilos
-│   ├── js/
-│   │   ├── auth.js
-│   │   ├── emailjs-fretex.js
-│   │   ├── cliente-socket.js
-│   │   └── motorista-socket.js
-│   └── uploads/
-│       ├── fotos/
-│       └── documentos/
-│
-├── logs/                      Logs
-└── docs/
-    ├── GUIA_XAMPP_MYSQL.md
-    ├── QUICK_START.md
-    └── TESTES.md
-```
-
----
-
-## 🛠️ Tecnologias
-
-- **Backend:** Node.js + Express.js
-- **Database:** MySQL (via XAMPP)
-- **Real-time:** Socket.IO
-- **Frontend:** HTML5 + CSS3 + JavaScript
-- **Email:** EmailJS
-
----
-
-## 📋 Funcionalidades
-
-✅ Autenticação com Email Verificado  
-✅ Criar & Aceitar Fretes em Tempo Real  
-✅ Chat Instantâneo  
-✅ Rastreamento GPS  
-✅ Notificações por Email  
-✅ Responsivo (Mobile-friendly)  
-
----
-
-## 🧪 Testes
-
-Abrir 2 navegadores:
-
-1. **Browser 1:** Cliente
-2. **Browser 2:** Motorista
-
-Testar fluxo:
-- Cliente → Novo Frete
-- Motorista → Notificação
-- Motorista → Aceita
-- Cliente → Recebe email
-
-Ver dados em **phpMyAdmin**: http://localhost/phpmyadmin
-
----
-
-## 🌐 Acessos Úteis
-
-- **App:** http://localhost:3000/FRETEX.html
-- **phpMyAdmin:** http://localhost/phpmyadmin
-- **Backend:** http://localhost:3000
-
----
-
-## ✅ Checklist
-
-- [ ] Instalar XAMPP
-- [ ] Iniciar MySQL
-- [ ] Criar database `fretex`
-- [ ] `npm install`
-- [ ] Editar `.env`
-- [ ] `npm start`
-- [ ] Abrir http://localhost:3000/FRETEX.html
-- [ ] Testar com 2 navegadores
-
----
-
-**Desenvolvido com ❤️ para Portugal**  
-**Versão 2.0 - Junho 2024**
+node --version
