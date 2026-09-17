@@ -1,19 +1,24 @@
-  # Dependências
+# Dependências
 node_modules/
 package-lock.json
+
 # Variáveis
 .env
 .env.local
+
 # Logs
 logs/
 *.log
+
 # Uploads
 public/uploads/*
 !public/uploads/.gitkeep
+
 # IDEs
 .vscode/
 .idea/
 *.swp
+
 # Temporários
 tmp/
 temp/
