@@ -28,10 +28,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fretex_db')
+const MONGO_URI = 'mongodb://127.0.0.1:27018/fretex_db';
+
+mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('🗄️ MongoDB conectado!');
-    console.log(`📍 Base de dados: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/fretex_db'}`);
+    console.log(`📍 Base de dados: ${MONGO_URI}`);
   })
   .catch(err => {
     console.error('❌ Erro ao conectar MongoDB:', err);

@@ -1,16 +1,18 @@
+
 # Dependências
 node_modules/
-package-lock.json
 
-# Variáveis
+# Variáveis de ambiente
 .env
-.env.local
+.env.*
+!.env.example
 
 # Logs
 logs/
 *.log
+npm-debug.log*
 
-# Uploads
+# Uploads (preservar a estrutura)
 public/uploads/*
 !public/uploads/.gitkeep
 
@@ -23,3 +25,7 @@ public/uploads/*
 tmp/
 temp/
 *.tmp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
