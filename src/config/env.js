@@ -1,61 +1,87 @@
+
 'use strict';
 
 /**
  * Configuração centralizada a partir de variáveis de ambiente.
- *
- * Variáveis obrigatórias: MONGODB_URI e JWT_SECRET.
- * Se faltarem (ou forem inseguras), a aplicação termina com uma mensagem clara.
- * Nunca escrevas os valores reais em logs, commits ou documentação.
+ * Nunca escrever valores secretos nos logs ou no repositório.
  */
 const path = require('path');
 
-// Em testes as variáveis são definidas pelo próprio teste; não carregar .env.
 if (process.env.NODE_ENV !== 'test') {
-  require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+  require('dotenv').config({
+    path: path.join(__dirname, '..', '..', '.env')
+  });
 }
 
 const JWT_SECRET_MIN_LENGTH = 32;
-const PLACEHOLDERS = ['troque_esta_chave', 'sua_chave_secreta', 'changeme', 'change_me'];
+
+const PLACEHOLDERS = [
+  'troque_esta_chave',
+  'sua_chave_secreta',
+  'changeme',
+  'change_me',
+  'gera_uma_chave_aleatoria_e_cola_aqui'
+];
 
 function carregarConfig(env = process.env) {
   const erros = [];
 
   const mongodbUri = (env.MONGODB_URI || '').trim();
+
   if (!mongodbUri) {
-    erros.push('MONGODB_URI não está definida (ex.: mongodb://127.0.0.1:27017/fretex_db).');
+    erros.push('MONGODB_URI não está definida.');
   } else if (!/^mongodb(\+srv)?:\/\//.test(mongodbUri)) {
-    erros.push('MONGODB_URI tem de começar por "mongodb://" ou "mongodb+srv://".');
+    erros.push('MONGODB_URI tem de começar por mongodb:// ou mongodb+srv://.');
   }
 
   const jwtSecret = env.JWT_SECRET || '';
+
   if (!jwtSecret) {
     erros.push('JWT_SECRET não está definida.');
   } else if (jwtSecret.length < JWT_SECRET_MIN_LENGTH) {
     erros.push(`JWT_SECRET é demasiado curta (mínimo ${JWT_SECRET_MIN_LENGTH} caracteres).`);
   } else if (PLACEHOLDERS.some((p) => jwtSecret.toLowerCase().includes(p))) {
-    erros.push('JWT_SECRET ainda tem o valor de exemplo. Gera uma chave aleatória própria.');
+    erros.push('JWT_SECRET ainda tem o valor de exemplo.');
   }
 
   const port = Number(env.PORT || 3000);
+
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    erros.push('PORT inválida (use um inteiro entre 1 e 65535).');
+    erros.push('PORT inválida.');
   }
 
-  if (erros.length) {
-    const err = new Error(
-      'Configuração inválida:\n  - ' + erros.join('\n  - ') +
-      '\nCopia .env.example para .env e preenche os valores.'
-    );
-    err.code = 'CONFIG_INVALIDA';
-    throw err;
+  // Configuração SMTP
+  const smtpHost = (env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const smtpPort = Number(env.SMTP_PORT || 465);
+  const smtpSecure = String(env.SMTP_SECURE || 'true').toLowerCase() === 'true';
+  const smtpUser = (env.SMTP_USER || '').trim();
+  const smtpPass = env.SMTP_PASS || '';
+
+  if (!smtpHost) {
+    erros.push('SMTP_HOST não está definida corretamente.');
   }
 
-  // Origens extra permitidas (apenas útil se o frontend for servido de outro sítio,
-  // por exemplo o Live Server). Com a arquitetura de mesma origem fica vazio.
+  if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+    erros.push('SMTP_PORT inválida.');
+  }
+
+  if ((smtpUser && !smtpPass) || (!smtpUser && smtpPass)) {
+    erros.push('SMTP_USER e SMTP_PASS têm de estar ambas configuradas.');
+  }
+
   const corsOrigins = (env.CORS_ORIGINS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+
+  if (erros.length) {
+    const err = new Error(
+      'Configuração inválida:\n  - ' + erros.join('\n  - ') +
+      '\nVerifica o ficheiro .env.'
+    );
+    err.code = 'CONFIG_INVALIDA';
+    throw err;
+  }
 
   return {
     nodeEnv: env.NODE_ENV || 'development',
@@ -64,7 +90,16 @@ function carregarConfig(env = process.env) {
     mongodbUri,
     jwtSecret,
     jwtExpiresIn: env.JWT_EXPIRES_IN || '7d',
-    corsOrigins
+    corsOrigins,
+
+    smtp: {
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      user: smtpUser,
+      pass: smtpPass,
+      from: smtpUser
+    }
   };
 }
 
