@@ -1,8 +1,7 @@
-
 # Dependências
 node_modules/
 
-# Variáveis de ambiente
+# Segredos e configuração local
 .env
 .env.*
 !.env.example
@@ -12,20 +11,18 @@ logs/
 *.log
 npm-debug.log*
 
-# Uploads (preservar a estrutura)
+# Uploads (mantém só a pasta)
 public/uploads/*
 !public/uploads/.gitkeep
 
-# IDEs
+# Editores e sistema
 .vscode/
 .idea/
 *.swp
+.DS_Store
+Thumbs.db
 
 # Temporários
 tmp/
 temp/
 *.tmp
-
-# Sistema operativo
-.DS_Store
-Thumbs.db

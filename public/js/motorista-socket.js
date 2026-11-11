@@ -6,7 +6,33 @@
  * ============================================================
  */
 const SOCKET_URL = window.location.origin;
-const socket = io(SOCKET_URL);
+const socket = io(SOCKET_URL, {
+  // O servidor exige o JWT guardado no login; é lido a cada (re)ligação.
+  auth: (cb) => cb({ token: localStorage.getItem('fx_token') || '' })
+});
+function fxAuthHeaders() {
+  const t = localStorage.getItem('fx_token');
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
+function fxSessaoExpirada() {
+  localStorage.removeItem('usuarioAtual');
+  localStorage.removeItem('fx_token');
+  window.location.href = 'login.html';
+}
+
+// Escapa texto vindo do servidor/outros utilizadores antes de o inserir via innerHTML.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+// Identificador seguro para usar dentro de onclick="fn('...')".
+function idSeguro(value) {
+  return String(value ?? '').replace(/[^A-Za-z0-9_-]/g, '');
+}
 const LOCATION_INTERVALS = {};
 let motoristaSocketJoinedId = null;
 let mensagensInbox = [];
@@ -28,7 +54,7 @@ window.addEventListener('pageshow', (event) => {
 
 window.addEventListener('DOMContentLoaded', () => {
   const userData = localStorage.getItem('usuarioAtual');
-  if (!userData) {
+  if (!userData || !localStorage.getItem('fx_token')) {
     window.location.href = 'FRETEX.html';
     return;
   }
@@ -67,6 +93,7 @@ socket.on('disconnect', (reason) => {
 
 socket.on('connect_error', (error) => {
   console.error('❌ Erro Socket.IO motorista:', error);
+  if (error && error.message === 'Não autenticado') fxSessaoExpirada();
 });
 
 function joinMotoristaSocket() {
@@ -201,7 +228,7 @@ socket.on('email_event', async (data) => {
 function escutarNovosFretes() {
   console.log('👂 Ouvindo novos fretes...');
   
-  fetch('/api/fretes/disponiveis')
+  fetch('/api/fretes/disponiveis', { headers: fxAuthHeaders() })
     .then(res => res.json())
     .then(data => {
       pedidosDisponiveis = (data.fretes || data || []).map(normalizarFrete);
@@ -218,7 +245,7 @@ function carregarPedidosAceitos() {
 
 async function sincronizarFretesServidor() {
   try {
-    const res = await fetch('/api/fretes/meus?usuarioId=' + encodeURIComponent(usuarioAtual.id));
+    const res = await fetch('/api/fretes/meus', { headers: fxAuthHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     const fretes = Array.isArray(data.fretes) ? data.fretes.map(normalizarFrete) : [];
@@ -471,11 +498,11 @@ function renderMessagesInbox() {
     const nome = c.clienteNome || 'Cliente';
     const last = c.ultimaMensagem?.texto || 'Nova conversa';
     const when = c.ultimaMensagem?.dataEnvio ? formatMessageTime(c.ultimaMensagem.dataEnvio) : '';
-    const id = String(c.freteId || '');
+    const id = idSeguro(c.freteId);
     return `<div class="message-card" onclick="abrirConversaMotorista('${id}')">
-      <div class="message-avatar">${nome.charAt(0).toUpperCase()}</div>
-      <div class="message-main"><div class="message-name">${nome}</div><div class="message-preview">${last}</div></div>
-      <div class="message-meta">${when}<br><span>Frete ${id}</span></div>
+      <div class="message-avatar">${escapeHtml(nome.charAt(0).toUpperCase())}</div>
+      <div class="message-main"><div class="message-name">${escapeHtml(nome)}</div><div class="message-preview">${escapeHtml(last)}</div></div>
+      <div class="message-meta">${escapeHtml(when)}<br><span>Frete ${id}</span></div>
     </div>`;
   }).join('');
 }
@@ -576,12 +603,12 @@ function addMsg(who, text, time) {
   div.className = 'msg ' + who;
 
   div.innerHTML = `
-    ${who === 'theirs' ? `<div class="msg-ava" style="width:26px;height:26px;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${ini}</div>` : ''}
+    ${who === 'theirs' ? `<div class="msg-ava" style="width:26px;height:26px;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${escapeHtml(ini)}</div>` : ''}
     <div>
-      <div class="msg-bubble">${text}</div>
-      <div class="msg-time">${time}</div>
+      <div class="msg-bubble">${escapeHtml(text)}</div>
+      <div class="msg-time">${escapeHtml(time)}</div>
     </div>
-    ${who === 'mine' ? `<div class="msg-ava" style="width:26px;height:26px;background:var(--orange);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${ini}</div>` : ''}
+    ${who === 'mine' ? `<div class="msg-ava" style="width:26px;height:26px;background:var(--orange);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${escapeHtml(ini)}</div>` : ''}
   `;
 
   msgs.appendChild(div);
@@ -640,6 +667,7 @@ function toggleStatus() {
 function logout() {
   if (confirm('Deseja sair da sua conta?')) {
     localStorage.removeItem('usuarioAtual');
+    localStorage.removeItem('fx_token');
     window.location.href = 'FRETEX.html';
   }
 }
@@ -688,7 +716,7 @@ function renderizarOrderCard(p, mostraBotaoAceitar) {
   return `
     <div class="order-card">
       <div class="order-header">
-        <span class="order-id">${p.id}</span>
+        <span class="order-id">${escapeHtml(p.id)}</span>
         <span class="order-status status-${p.status}">${p.status.replace('_', ' ').toUpperCase()}</span>
       </div>
       <div class="order-details">
@@ -696,21 +724,21 @@ function renderizarOrderCard(p, mostraBotaoAceitar) {
           <div class="detail-icon">👤</div>
           <div class="detail-content">
             <div class="detail-label">Cliente</div>
-            <div class="detail-value">${p.clienteNome}</div>
+            <div class="detail-value">${escapeHtml(p.clienteNome)}</div>
           </div>
         </div>
         <div class="detail-block">
           <div class="detail-icon">📍</div>
           <div class="detail-content">
             <div class="detail-label">Origem → Destino</div>
-            <div class="detail-value">${p.origem} → ${p.destino}</div>
+            <div class="detail-value">${escapeHtml(p.origem)} → ${escapeHtml(p.destino)}</div>
           </div>
         </div>
         <div class="detail-block">
           <div class="detail-icon">📦</div>
           <div class="detail-content">
             <div class="detail-label">Carga</div>
-            <div class="detail-value">${p.descricao || p.item}</div>
+            <div class="detail-value">${escapeHtml(p.descricao || p.item)}</div>
           </div>
         </div>
         <div class="detail-block">
@@ -724,10 +752,10 @@ function renderizarOrderCard(p, mostraBotaoAceitar) {
       <div class="order-footer">
 <span class="order-price">${preco.toFixed(2)}€</span>
         <div class="order-actions">
-          ${mostraBotaoAceitar ? `<button class="btn-small btn-accept" onclick="aceitarPedido('${p.id}')">Aceitar</button>` : ''}
-          ${p.status === 'aceito' ? `<button class="btn-small btn-accept" onclick="iniciarEntregaPedido('${p.id}')">🚗 Iniciar</button>` : ''}
-          ${p.status === 'em_andamento' ? `<button class="btn-small btn-complete" onclick="completarPedido('${p.id}')">Finalizar</button>` : ''}
-          <button class="btn-small btn-details" onclick="openChat('${p.id}')">💬 Chat</button>
+          ${mostraBotaoAceitar ? `<button class="btn-small btn-accept" onclick="aceitarPedido('${idSeguro(p.id)}')">Aceitar</button>` : ''}
+          ${p.status === 'aceito' ? `<button class="btn-small btn-accept" onclick="iniciarEntregaPedido('${idSeguro(p.id)}')">🚗 Iniciar</button>` : ''}
+          ${p.status === 'em_andamento' ? `<button class="btn-small btn-complete" onclick="completarPedido('${idSeguro(p.id)}')">Finalizar</button>` : ''}
+          <button class="btn-small btn-details" onclick="openChat('${idSeguro(p.id)}')">💬 Chat</button>
         </div>
       </div>
     </div>

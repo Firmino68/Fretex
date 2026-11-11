@@ -429,6 +429,7 @@ function verificarAutenticacao() {
 function logout() {
   if (confirm('Tem a certeza que quer sair?')) {
     localStorage.removeItem('usuarioAtual');
+    localStorage.removeItem('fx_token');
     window.location.href = 'FRETEX.html';
   }
 }

@@ -7,7 +7,19 @@
  */
 
 const SOCKET_URL = window.location.origin;
-const socket = io(SOCKET_URL);
+const socket = io(SOCKET_URL, {
+  // O servidor exige o JWT guardado no login; é lido a cada (re)ligação.
+  auth: (cb) => cb({ token: localStorage.getItem('fx_token') || '' })
+});
+function fxAuthHeaders() {
+  const t = localStorage.getItem('fx_token');
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
+function fxSessaoExpirada() {
+  localStorage.removeItem('usuarioAtual');
+  localStorage.removeItem('fx_token');
+  window.location.href = 'login.html';
+}
 let clienteSocketJoinedId = null;
 
 // ============================================================
@@ -98,7 +110,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const usuarioData = localStorage.getItem('usuarioAtual');
 
-  if (!usuarioData) {
+  if (!usuarioData || !localStorage.getItem('fx_token')) {
     window.location.href = 'FRETEX.html';
     return;
   }
@@ -169,6 +181,7 @@ socket.on('disconnect', (reason) => {
 
 socket.on('connect_error', (error) => {
   console.error('❌ Erro Socket.IO:', error);
+  if (error && error.message === 'Não autenticado') fxSessaoExpirada();
 });
 
 // ============================================================
@@ -434,7 +447,7 @@ function sincronizarFretesServidorCliente() {
 
   // Fallback HTTP para recuperar o estado mesmo que um evento Socket.IO
   // tenha ocorrido enquanto a ligação estava interrompida.
-  fetch('/api/fretes/meus?usuarioId=' + encodeURIComponent(USER.id))
+  fetch('/api/fretes/meus', { headers: fxAuthHeaders() })
     .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
     .then(data => {
       const remotos = Array.isArray(data.fretes) ? data.fretes : [];
@@ -3388,6 +3401,7 @@ function doLogout() {
   localStorage.removeItem(
     'usuarioAtual'
   );
+  localStorage.removeItem('fx_token');
 
   window.location.href =
     'FRETEX.html';

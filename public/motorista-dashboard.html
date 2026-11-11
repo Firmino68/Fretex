@@ -908,7 +908,8 @@ usuarioAtual = JSON.parse(userData);
         function logout() {
             if (confirm('Deseja sair da sua conta?')) {
                 localStorage.removeItem('usuarioAtual');
-                window.location.href = 'fretex-login.html';
+                localStorage.removeItem('fx_token');
+                window.location.href = 'FRETEX.html';
             }
         }
 

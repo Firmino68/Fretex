@@ -1,146 +1,131 @@
-# 🚚 FRETEX — Plataforma de Logística e Fretes em Tempo Real
+# 🚚 FRETEX
 
-Aplicação web de fretes (estilo "Uber para cargas") com registo de cliente/motorista, criação e aceitação de fretes em tempo real via **Socket.IO**, chat integrado, rastreamento GPS e notificações por email (EmailJS).
+Aplicação web full-stack para **gestão e acompanhamento de fretes em tempo real**. Os clientes pedem transportes, os motoristas aceitam-nos, e ambos comunicam por chat e seguem a trajetória GPS da entrega.
 
-- **Backend:** Node.js + Express + Socket.IO
-- **Base de dados:** MongoDB (via Mongoose)
-- **Autenticação:** JWT + bcrypt
-- **Uploads:** Multer
-- **Email transacional:** Nodemailer / EmailJS
-- **Frontend:** HTML5 + CSS3 + JavaScript puro
-- **Idioma:** Português (Portugal)
-- **Licença:** MIT — © 2026 Pedro Firmino e José Bruno
+> Projeto de portefólio · Node.js · Express · MongoDB · Socket.IO
 
----
+## Funcionalidades
 
-## ✅ Nota sobre a origem do projeto
+- Registo e login de **clientes** e **motoristas** (JWT, palavras-passe com hash `bcrypt`)
+- Cliente cria pedidos de frete (origem, destino, preço, carga) com mapa (Leaflet / OpenStreetMap)
+- Motoristas veem os pedidos disponíveis em tempo real e aceitam-nos (aceitação atómica: só um motorista ganha o frete)
+- Estados do frete: `disponivel → aceito → em_andamento → entregue`
+- Chat entre cliente e motorista por frete
+- Trajetória GPS do motorista, guardada e mostrada ao cliente
+- Notificações por email via EmailJS (no navegador)
 
-O `.zip` original tinha um **merge do Git por resolver**: vários ficheiros (`server.js`, `package.json`, `README.md` e todos os HTML/JS em `public/`) continham marcadores de conflito (`<<<<<<<`/`=======`/`>>>>>>>`) misturando duas versões — uma em **MongoDB** e outra em **MySQL/XAMPP** — o que impedia `npm start` de funcionar (`EJSONPARSE` no `package.json`, código duplicado no `server.js`, etc.).
+## Arquitetura
 
-Isso já foi corrigido nesta versão (`fretex-corrigido.zip`): mantive a versão **MongoDB/Mongoose**, que é a que corresponde aos `models/` (`Usuario.js`, `Frete.js`, `Mensagem.js`, `GPSTrajetoria.js`) e ao `.env`. O nome da pasta (`fretex-xampp-mysql`) é um resquício de uma tentativa de migração para MySQL que ficou incompleta — o backend atual usa MongoDB, não MySQL/XAMPP.
+Um único processo Node.js. **Não é necessário Apache/XAMPP.**
 
-O `node_modules/` e o `.git/` (que estava com o merge a meio) não foram incluídos neste zip; basta correr `npm install` depois de extrair.
+```
+Browser ──► http://localhost:3000
+              │
+              ├─ Express ── frontend estático (public/)  →  "/" serve FRETEX.html
+              ├─ Express ── API REST (/api/auth, /api/fretes)
+              ├─ Socket.IO (mesmo servidor e mesma origem)
+              └─ Mongoose ─► MongoDB
+```
 
----
+```
+server.js            arranque: HTTP + Socket.IO + ligação à BD + encerramento limpo
+src/config/env.js    leitura e validação das variáveis de ambiente
+src/app.js           aplicação Express (helmet, rate limit, rotas, erros)
+src/middleware/      autenticação JWT e autorização por perfil
+src/routes/          auth.js, fretes.js
+src/services/        utilitários de fretes
+src/sockets/         eventos Socket.IO (autenticados por JWT)
+models/              Usuario, Frete, Mensagem, GPSTrajetoria (Mongoose)
+public/              HTML, CSS e JavaScript do frontend
+tests/               testes automáticos (node:test + supertest)
+```
 
-## 🚀 Instalação e arranque
+## Requisitos
 
-### Pré-requisitos
-- [Node.js](https://nodejs.org) ≥ 16
-- Uma instância MongoDB (local, via `mongod`, ou um cluster gratuito no [MongoDB Atlas](https://www.mongodb.com/atlas))
-- (Opcional) Conta gratuita em [EmailJS](https://www.emailjs.com) para notificações por email
+- **Node.js 20.19 ou superior** (testado com 22; desenvolvido em 24)
+- **MongoDB** local (Community Server) ou uma conta gratuita no MongoDB Atlas
 
-### Passos
+## Executar localmente (Windows)
 
-```bash
-# 1. Extrair o projeto e entrar na pasta
-cd fretex-xampp-mysql
-
-# 2. Instalar dependências
+```powershell
+git clone https://github.com/Firmino68/Fretex.git
+cd Fretex
 npm install
-
-# 3. Configurar variáveis de ambiente
-cp .env.example .env
+copy .env.example .env
 ```
 
-Editar o `.env` com os seus valores:
+Edita o `.env` e define, no mínimo, `MONGODB_URI` e `JWT_SECRET`. Para gerar uma chave:
 
-```env
-MONGODB_URI=mongodb://localhost:27017/fretex_db
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=uma_chave_secreta_longa_e_unica
-
-# EmailJS (opcional, para emails de verificação/notificação)
-EMAILJS_PUBLIC_KEY=...
-EMAILJS_SERVICE_ID=...
+```powershell
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-```bash
-# 4. Iniciar o servidor
-npm start        # produção
-npm run dev       # desenvolvimento, com nodemon
+Arranca (com o MongoDB ativo):
+
+```powershell
+npm start        # produção/normal
+npm run dev      # com reinício automático (nodemon)
 ```
 
-### Aceder à aplicação
+Abre **http://localhost:3000**. Se faltar uma variável obrigatória, o servidor termina com uma mensagem a indicar qual.
 
-- App: `http://localhost:3000/FRETEX.html`
-- Login: `http://localhost:3000/login.html`
-- API de teste: `http://localhost:3000/api/test`
+### Variáveis de ambiente
 
----
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `MONGODB_URI` | sim | Ligação ao MongoDB |
+| `JWT_SECRET` | sim | Chave dos tokens (mín. 32 caracteres) |
+| `PORT` | não | Porta (defeito `3000`) |
+| `NODE_ENV` | não | `development` ou `production` |
+| `JWT_EXPIRES_IN` | não | Duração do token (defeito `7d`) |
+| `CORS_ORIGINS` | não | Só se o frontend for servido de outra origem |
 
-## 📂 Estrutura do projeto
+## API
 
-```
-fretex-xampp-mysql/
-├── server.js                     Backend (Express + Socket.IO + Mongoose)
-├── package.json                  Dependências e scripts
-├── .env / .env.example           Configuração de ambiente
-├── models/
-│   ├── Usuario.js                Schema de utilizadores (cliente/motorista)
-│   ├── Frete.js                  Schema de fretes
-│   ├── Mensagem.js                Schema de mensagens de chat
-│   └── GPSTrajetoria.js           Schema de trajetórias GPS
-├── public/
-│   ├── FRETEX.html               Landing page + login
-│   ├── login.html                Página de autenticação
-│   ├── cliente-dashboard.html    Dashboard do cliente
-│   ├── motorista-dashboard.html  Dashboard do motorista
-│   ├── estilo.css                Estilos globais
-│   ├── uploads/                  Ficheiros enviados (fotos, documentos)
-│   └── js/
-│       ├── auth.js               Lógica de login/registo
-│       ├── cliente-socket.js     Eventos Socket.IO do cliente
-│       ├── motorista-socket.js   Eventos Socket.IO do motorista
-│       └── emailjs-fretex.js     Integração com EmailJS
-└── docs/
-    ├── GUIA_XAMPP_MYSQL.md       Guia da variante MySQL/XAMPP
-    ├── QUICK_START.md            Resumo rápido
-    └── TESTES.md                 Plano de testes
+| Método e rota | Acesso | Descrição |
+|---|---|---|
+| `POST /api/auth/registrar` | público | Cria conta e devolve token |
+| `POST /api/auth/login` | público | Autentica e devolve token |
+| `GET /api/auth/perfil` | autenticado | Perfil do utilizador |
+| `GET /api/fretes/disponiveis` | motorista | Fretes à espera de motorista |
+| `POST /api/fretes/criar` | cliente | Cria um frete |
+| `GET /api/fretes/meus` | autenticado | Fretes do próprio utilizador |
+| `GET /api/fretes/:id` | cliente dono / motorista atribuído | Detalhe de um frete |
+
+Os pedidos autenticados usam o cabeçalho `Authorization: Bearer <token>`. O Socket.IO envia o token em `auth.token` no handshake; ligações sem token válido são recusadas.
+
+## Testes
+
+```powershell
+npm test
 ```
 
----
+Cobrem validação da configuração, rotas e autorização da API, e o fluxo em tempo real por Socket.IO (criar → aceitar → iniciar → chat → finalizar, incluindo tentativas de falsificação de identidade).
 
-## 📋 Funcionalidades
+Os testes com base de dados precisam de MongoDB acessível em `mongodb://127.0.0.1:27017` (usam bases `fretex_test_*`, apagadas no fim). Para outro endereço:
 
-- ✅ Registo e login de **clientes** e **motoristas** (JWT)
-- ✅ Criação e aceitação de fretes em tempo real (Socket.IO)
-- ✅ Chat instantâneo entre cliente e motorista
-- ✅ Rastreamento GPS da entrega (trajetória guardada em `GPSTrajetoria`)
-- ✅ Notificações por email (novo frete, frete aceite, entrega, etc.)
-- ✅ Upload de fotos/documentos (Multer)
-- ✅ Interface responsiva (mobile-friendly)
+```powershell
+$env:TEST_MONGODB_URI="mongodb://127.0.0.1:27018"; npm test
+```
 
-## 📡 Principais eventos Socket.IO
+Sem MongoDB, esses testes aparecem como *skipped*.
 
-| Evento | Descrição |
-|---|---|
-| `user_join` | Regista a ligação do utilizador (sala pessoal) |
-| `frete_criar` | Cliente cria um novo pedido de frete |
-| `frete_aceitar` | Motorista aceita um frete disponível |
-| `entrega_iniciar` / `entrega_finalizar` | Início e fim da entrega |
-| `localizacao_motorista` | Atualização de coordenadas GPS |
-| `mensagem_enviar` | Envio de mensagem de chat |
+## Segurança
 
----
+- JWT obrigatório em todas as rotas privadas e no Socket.IO; a identidade vem sempre do token, nunca do pedido
+- Autorização por perfil (cliente/motorista) e por posse do frete
+- Palavras-passe com `bcryptjs`; mensagens de login iguais para email inexistente e password errada
+- `helmet`, limite de tentativas no login/registo, limite de tamanho do corpo dos pedidos
+- Sem CORS aberto (mesma origem); sem segredos no código; erros internos não são enviados ao cliente em produção
+- Texto de outros utilizadores é escapado antes de ser inserido no HTML
 
-## 🧪 Testar o fluxo completo
+## Limitações conhecidas
 
-1. Abrir dois navegadores/abas.
-2. Aba 1: registar como **cliente** e criar um frete.
-3. Aba 2: registar como **motorista** e aceitar o frete recebido.
-4. Confirmar troca de mensagens no chat e atualização de estado do frete.
+- A **verificação de email** é feita no navegador (código gerado e validado no cliente, enviado por EmailJS). Serve de demonstração, não é uma verificação segura; o servidor não a impõe.
+- O token JWT fica no `localStorage`.
+- Geocodificação e rotas dependem de serviços públicos (Nominatim e OSRM).
+- A Content-Security-Policy está desligada porque as páginas usam scripts inline.
 
----
+## Licença
 
-## 📖 Documentação adicional
-
-- [`docs/QUICK_START.md`](docs/QUICK_START.md)
-- [`docs/TESTES.md`](docs/TESTES.md)
-- [`FLUXO_COMPLETO.md`](FLUXO_COMPLETO.md)
-- [`docs/GUIA_XAMPP_MYSQL.md`](docs/GUIA_XAMPP_MYSQL.md) — guia para quem preferir migrar de facto para MySQL/XAMPP
-
----
-
-**FRETEX** — desenvolvido para Portugal 🇵🇹
+MIT — ver [LICENSE](LICENSE).

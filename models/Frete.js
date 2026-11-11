@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const freteSchema = new mongoose.Schema({
   codigoFrete: {
     type: String,
-    index: true,
-    unique: true,
+    unique: true, // cria o índice único (não declarar também index: true)
     sparse: true
   },
   clienteId: {
