@@ -1,10 +1,13 @@
-// Estado de verificação
+
+'use strict';
+
+// ============================================================
+// ESTADO DA CONFIRMAÇÃO DE EMAIL
+// ============================================================
+
 let _verifyEmail = '';
-let _verifyCode = '';
 let _verifyFirstName = '';
-let _verifyType = '';
-let _verifyUserId = null; // ✅ guarda o id real vindo da BD após o registo
-let _verifyToken = null;
+
 
 // ============================================================
 // 1. REGISTAR
@@ -13,64 +16,66 @@ let _verifyToken = null;
 async function doRegister() {
   const nome = document.getElementById('rNome')?.value.trim();
   const apelido = document.getElementById('rAp')?.value.trim();
-  const email = document.getElementById('rEmail')?.value.trim();
+  const email = document.getElementById('rEmail')?.value.trim().toLowerCase();
   const telefone = document.getElementById('rTel')?.value.trim();
   const password = document.getElementById('rPass')?.value;
   const veiculo = document.getElementById('rVeh')?.value;
   const distrito = document.getElementById('rDist')?.value;
-  
-  // Determinar tipo (cliente ou motorista)
+
   const rcDriver = document.getElementById('rcDriver');
-  const tipo = rcDriver?.classList.contains('active') ? 'motorista' : 'cliente';
+  const tipo = rcDriver?.classList.contains('active')
+    ? 'motorista'
+    : 'cliente';
 
-  // Limpar erro anterior
-  document.getElementById('registerError').style.display = 'none';
+  limparErro('registerError');
 
-  // Validação
+  // Validar campos obrigatórios
   if (!nome || !apelido || !email || !telefone || !password) {
-    mostrarErro('registerError', '❌ Preencha todos os campos obrigatórios');
+    mostrarErro('registerError', 'Preenche todos os campos obrigatórios.');
     return;
   }
 
   if (nome.length < 2) {
-    mostrarErro('registerError', '❌ Nome demasiado curto');
+    mostrarErro('registerError', 'Nome demasiado curto.');
     return;
   }
 
   if (!validarEmail(email)) {
-    mostrarErro('registerError', '❌ Email inválido — ex: nome@email.com');
+    mostrarErro('registerError', 'Email inválido.');
     return;
   }
 
   if (!validarTelefone(telefone)) {
-    mostrarErro('registerError', '❌ Telemóvel inválido — ex: 912 345 678');
+    mostrarErro('registerError', 'Telemóvel inválido.');
     return;
   }
 
   if (!validarPassword(password)) {
-    mostrarErro('registerError', '❌ Password com mínimo 8 caracteres');
+    mostrarErro('registerError', 'A password deve ter pelo menos 8 caracteres.');
     return;
   }
 
   if (tipo === 'motorista' && !veiculo) {
-    mostrarErro('registerError', '❌ Seleciona o tipo de veículo');
+    mostrarErro('registerError', 'Seleciona o tipo de veículo.');
     return;
   }
 
-  // Desabilitar botão
   const btn = document.getElementById('btnReg');
-  const textOrig = btn.textContent;
-  btn.textContent = '⏳ A criar conta...';
-  btn.disabled = true;
+  const textoOriginal = btn?.textContent;
+
+  if (btn) {
+    btn.textContent = 'A criar conta...';
+    btn.disabled = true;
+  }
 
   try {
-    const nomeCompleto = nome + ' ' + apelido;
-    
     const response = await fetch('/api/auth/registrar', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        nome: nomeCompleto,
+        nome: nome + ' ' + apelido,
         email,
         telefone,
         password,
@@ -83,42 +88,40 @@ async function doRegister() {
     const data = await response.json();
 
     if (!response.ok) {
-      mostrarErro('registerError', data.error || 'Erro ao registar');
-      btn.textContent = textOrig;
-      btn.disabled = false;
+      mostrarErro(
+        'registerError',
+        data.error || data.erro || 'Não foi possível criar a conta.'
+      );
       return;
     }
 
-    // ✅ Registo sucesso - Mostrar painel de verificação
-    btn.textContent = textOrig;
-    btn.disabled = false;
-    _showSuccess(tipo, email, nome);
-    _verifyUserId = data.usuario.id;
-    _verifyToken = data.token || null;
+    // O servidor já criou a conta e enviou o código por email.
+    _showSuccess(email, nome);
 
   } catch (err) {
-    mostrarErro('registerError', 'Erro na ligação: ' + err.message);
-    btn.textContent = textOrig;
-    btn.disabled = false;
+    console.error('Erro no registo:', err);
+    mostrarErro(
+      'registerError',
+      'Erro de ligação ao servidor. Tenta novamente.'
+    );
+  } finally {
+    if (btn) {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+    }
   }
 }
 
+
 // ============================================================
-// 2. MOSTRAR PAINEL DE VERIFICAÇÃO
+// 2. MOSTRAR PAINEL DE CONFIRMAÇÃO
 // ============================================================
 
-function _showSuccess(tipo, email, firstName) {
+function _showSuccess(email, firstName) {
   _verifyEmail = email;
-  _verifyType = tipo;
-  _verifyFirstName = firstName;
+  _verifyFirstName = firstName || '';
 
-  // Gerar código de 6 dígitos
-  _verifyCode = String(Math.floor(100000 + Math.random() * 900000));
-  
-  // Guardar código temporariamente (localStorage)
-  localStorage.setItem('fx_verify_' + email, _verifyCode);
-
-  // Esconder painéis
+  // Esconder os restantes painéis
   ['pLogin', 'pReg', 'spanel', 'pForgot', 'pReset'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -127,175 +130,285 @@ function _showSuccess(tipo, email, firstName) {
   const tabsRow = document.getElementById('tabsRow');
   if (tabsRow) tabsRow.style.display = 'none';
 
-  // Mostrar painel de verificação
+  // Mostrar painel de confirmação
   const pVerify = document.getElementById('pVerify');
   if (pVerify) pVerify.style.display = 'block';
 
   const emailEl = document.getElementById('verifyEmailAddr');
   if (emailEl) emailEl.textContent = email;
 
-  // Mostrar hint de envio
   const hint = document.getElementById('codeDevHint');
+
   if (hint) {
     hint.style.display = 'block';
-    hint.style.background = '#E3F2FD';
-    hint.style.borderColor = '#90CAF9';
-    hint.style.color = '#1565C0';
-    hint.textContent = '📧 A enviar código para ' + email + '…';
+    hint.style.background = '#E8F5E9';
+    hint.style.borderColor = '#A5D6A7';
+    hint.style.color = '#2E7D32';
+    hint.textContent =
+      'Código enviado para o teu email. Verifica também a pasta de spam.';
   }
 
-  // Enviar email com código via EmailJS
-  enviarEmailVerificacao(email, firstName, _verifyCode, hint);
+  // Limpar os campos do código
+  document.querySelectorAll('[data-code-digit]').forEach(input => {
+    input.value = '';
+  });
 
-  // Focar primeiro campo do código
+  limparErro('verifyErr');
+
+  // Focar o primeiro campo
   setTimeout(() => {
-    const firstCodeInput = document.querySelector('[data-code-digit="0"]');
-    if (firstCodeInput) firstCodeInput.focus();
+    document.querySelector('[data-code-digit="0"]')?.focus();
   }, 300);
 }
 
-// ============================================================
-// 3. ENVIAR EMAIL COM CÓDIGO
-// ============================================================
-
-function enviarEmailVerificacao(email, nome, codigo, hintElement) {
-  // Evita "emailjs is not defined" caso a biblioteca CDN não carregue.
-  if (typeof emailjs === 'undefined') {
-    console.error('❌ EmailJS não foi carregado. Verifica a ligação à CDN.');
-    if (hintElement) {
-      hintElement.style.background = '#FFF8E1';
-      hintElement.style.borderColor = '#FFE082';
-      hintElement.style.color = '#795548';
-      hintElement.textContent = '⚠️ Não foi possível enviar o email. Código: ' + codigo;
-    }
-    return;
-  }
-
-  // Preparar template parameters
-  const templateParams = {
-    to_email: email,
-    to_name: nome,
-    verification_code: codigo,
-    expiry_minutes: '10'
-  };
-
-  emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templates.verificacao, templateParams)
-    .then(() => {
-      console.log('✅ Email enviado com sucesso');
-      
-      if (hintElement) {
-        hintElement.style.background = '#E8F5E9';
-        hintElement.style.borderColor = '#A5D6A7';
-        hintElement.style.color = '#2E7D32';
-        hintElement.textContent = '✅ Código enviado! Verifica a caixa de entrada.';
-      }
-    })
-    .catch(err => {
-      console.error('❌ Erro EmailJS:', err);
-      
-      if (hintElement) {
-        hintElement.style.background = '#FFF8E1';
-        hintElement.style.borderColor = '#FFE082';
-        hintElement.style.color = '#795548';
-        hintElement.textContent = '⚠️ Erro ao enviar. Código de emergência: ' + codigo;
-      }
-    });
-}
 
 // ============================================================
-// 4. VERIFICAR CÓDIGO
+// 3. VERIFICAR CÓDIGO NO SERVIDOR
 // ============================================================
 
 async function verifyCode() {
-  // Recolher código dos 6 campos
-  const codeInputs = document.querySelectorAll('[data-code-digit], [data-group="verify"]');
-  const code = Array.from(codeInputs).map(input => input.value).join('');
+  const codeInputs = document.querySelectorAll('[data-code-digit]');
 
-  if (code.length !== 6) {
-    mostrarErro('verifyErr', '❌ Insira os 6 dígitos do código');
+  const codigo = Array.from(codeInputs)
+    .map(input => input.value.trim())
+    .join('');
+
+  if (!/^\d{6}$/.test(codigo)) {
+    mostrarErro('verifyErr', 'Insere os 6 dígitos do código.');
     return;
   }
 
-  const savedCode = localStorage.getItem('fx_verify_' + _verifyEmail);
-
-  if (code !== savedCode) {
-    mostrarErro('verifyErr', '❌ Código inválido');
+  if (!_verifyEmail) {
+    mostrarErro(
+      'verifyErr',
+      'Não foi possível identificar o email. Volta a iniciar o registo.'
+    );
     return;
   }
 
-  // ✅ Código correto
-  document.getElementById('verifyErr').style.display = 'none';
-  // Guardar utilizador como verificado
-  const usuario = {
-     id: _verifyUserId, // ✅ agora inclui o id real da BD
-    email: _verifyEmail,
-    nome: _verifyFirstName,
-    tipo: _verifyType,
-    dataCriacao: new Date().toISOString(),
-    emailVerificado: true,
-    token: _verifyToken
-  };
+  const btn = document.querySelector(
+    '#pVerify button[onclick="verifyCode()"]'
+  );
 
-  localStorage.setItem('usuarioAtual', JSON.stringify(usuario));
-  if (_verifyToken) localStorage.setItem('fx_token', _verifyToken);
-  localStorage.removeItem('fx_verify_' + _verifyEmail);
+  const textoOriginal = btn?.textContent;
 
-  mostrarAlerta('✅ Email verificado com sucesso!', 'success');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'A verificar...';
+  }
 
-  // Redirecionar para dashboard
-  const dashboard = _verifyType === 'cliente' 
-    ? 'cliente-dashboard.html' 
-    : 'motorista-dashboard.html';
+  try {
+    const response = await fetch('/api/auth/verificar-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: _verifyEmail,
+        codigo
+      })
+    });
 
-  setTimeout(() => {
-    window.location.href = dashboard;
-  }, 2000);
+    const data = await response.json();
+
+    if (!response.ok) {
+      mostrarErro(
+        'verifyErr',
+        data.error || data.erro || 'Código inválido ou expirado.'
+      );
+      return;
+    }
+
+    // Limpar campos do código
+    document.querySelectorAll('[data-code-digit]').forEach(input => {
+      input.value = '';
+    });
+
+    limparErro('verifyErr');
+
+    // Preencher email no formulário de login
+    const loginEmail = document.getElementById('lEmail');
+
+    if (loginEmail) {
+      loginEmail.value = _verifyEmail;
+    }
+
+    mostrarAlerta(
+      'Email confirmado com sucesso! Já podes iniciar sessão.',
+      'success'
+    );
+
+    // Limpar estado temporário
+    _verifyEmail = '';
+    _verifyFirstName = '';
+
+    // Voltar ao login
+    setTimeout(() => {
+      switchTo('login');
+    }, 1200);
+
+  } catch (err) {
+    console.error('Erro na confirmação:', err);
+
+    mostrarErro(
+      'verifyErr',
+      'Não foi possível contactar o servidor. Tenta novamente.'
+    );
+
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  }
 }
+
+
+// ============================================================
+// 4. REENVIAR CÓDIGO PELO SERVIDOR
+// ============================================================
+
+async function resendCode() {
+  if (!_verifyEmail) {
+    mostrarErro('verifyErr', 'Não foi possível identificar o email.');
+    return;
+  }
+
+  const hint = document.getElementById('codeDevHint');
+
+  if (hint) {
+    hint.style.display = 'block';
+    hint.textContent = 'A solicitar novo código...';
+  }
+
+  try {
+    const response = await fetch('/api/auth/reenviar-codigo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: _verifyEmail
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (hint) {
+        hint.style.background = '#FFF8E1';
+        hint.style.borderColor = '#FFE082';
+        hint.style.color = '#795548';
+        hint.textContent =
+          data.error ||
+          data.erro ||
+          'Não foi possível reenviar o código. Tenta novamente mais tarde.';
+      }
+
+      return;
+    }
+
+    if (hint) {
+      hint.style.background = '#E8F5E9';
+      hint.style.borderColor = '#A5D6A7';
+      hint.style.color = '#2E7D32';
+      hint.textContent =
+        data.mensagem ||
+        'Se a conta estiver pendente de confirmação, receberás um novo código.';
+    }
+
+    // Limpar os campos para inserir o novo código
+    document.querySelectorAll('[data-code-digit]').forEach(input => {
+      input.value = '';
+    });
+
+    limparErro('verifyErr');
+
+    document.querySelector('[data-code-digit="0"]')?.focus();
+
+  } catch (err) {
+    console.error('Erro ao reenviar código:', err);
+
+    if (hint) {
+      hint.style.background = '#FFF8E1';
+      hint.style.borderColor = '#FFE082';
+      hint.style.color = '#795548';
+      hint.textContent = 'Erro de ligação ao servidor. Tenta novamente.';
+    }
+  }
+}
+
 
 // ============================================================
 // 5. LOGIN
 // ============================================================
 
 async function doLogin() {
-  const email = document.getElementById('lEmail')?.value.trim();
+  const email = document.getElementById('lEmail')?.value.trim().toLowerCase();
   const password = document.getElementById('lPass')?.value;
 
-  document.getElementById('lEmailErr').style.display = 'none';
-  document.getElementById('lPassErr').style.display = 'none';
+  limparErro('lEmailErr');
+  limparErro('lPassErr');
+  limparErro('loginError');
 
   if (!email) {
-    mostrarErro('lEmailErr', '❌ Email obrigatório');
+    mostrarErro('lEmailErr', 'Email obrigatório.');
     return;
   }
 
   if (!password) {
-    mostrarErro('lPassErr', '❌ Password obrigatória');
+    mostrarErro('lPassErr', 'Password obrigatória.');
     return;
   }
 
   const btn = document.getElementById('btnLogin');
-  const textOrig = btn.textContent;
-  btn.textContent = '⏳ A entrar...';
-  btn.disabled = true;
+  const textoOriginal = btn?.textContent;
+
+  if (btn) {
+    btn.textContent = 'A entrar...';
+    btn.disabled = true;
+  }
 
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      mostrarErro('loginError', data.error || 'Email ou password incorretos');
-      btn.textContent = textOrig;
-      btn.disabled = false;
+
+      // Conta existe, mas ainda não confirmou o email
+      if (data.requerVerificacao) {
+        _showSuccess(email, '');
+
+        mostrarErro(
+          'verifyErr',
+          'O teu email ainda não foi confirmado. Introduz o código recebido ou pede um novo.'
+        );
+
+        return;
+      }
+
+      mostrarErro(
+        'loginError',
+        data.error || data.erro || 'Email ou password incorretos.'
+      );
+
       return;
     }
 
-    // ✅ Login sucesso
+    // Guardar token recebido do servidor
     localStorage.setItem('fx_token', data.token || '');
+
+    // Guardar dados do utilizador
     localStorage.setItem('usuarioAtual', JSON.stringify({
       id: data.usuario.id,
       nome: data.usuario.nome,
@@ -309,22 +422,32 @@ async function doLogin() {
       dataCriacao: new Date().toISOString()
     }));
 
-    mostrarAlerta('✅ Login realizado!', 'success');
+    mostrarAlerta('Login realizado com sucesso!', 'success');
 
-    const dashboard = data.usuario.tipo === 'cliente' 
-      ? 'cliente-dashboard.html' 
+    const dashboard = data.usuario.tipo === 'cliente'
+      ? 'cliente-dashboard.html'
       : 'motorista-dashboard.html';
-    
+
     setTimeout(() => {
       window.location.href = dashboard;
     }, 1500);
 
   } catch (err) {
-    mostrarErro('loginError', 'Erro: ' + err.message);
-    btn.textContent = textOrig;
-    btn.disabled = false;
+    console.error('Erro no login:', err);
+
+    mostrarErro(
+      'loginError',
+      'Erro de ligação ao servidor. Tenta novamente.'
+    );
+
+  } finally {
+    if (btn) {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+    }
   }
 }
+
 
 // ============================================================
 // 6. FUNÇÕES AUXILIARES
@@ -332,19 +455,26 @@ async function doLogin() {
 
 function mostrarErro(elementId, msg) {
   const el = document.getElementById(elementId);
+
   if (el) {
     el.textContent = msg;
     el.style.display = 'block';
   }
 }
 
+
 function limparErro(elementId) {
   const el = document.getElementById(elementId);
-  if (el) el.style.display = 'none';
+
+  if (el) {
+    el.style.display = 'none';
+  }
 }
+
 
 function mostrarAlerta(msg, tipo = 'info') {
   const div = document.createElement('div');
+
   div.style.cssText = `
     position: fixed;
     top: 80px;
@@ -362,38 +492,48 @@ function mostrarAlerta(msg, tipo = 'info') {
     z-index: 9999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   `;
-  
+
   div.textContent = msg;
   document.body.appendChild(div);
-  
+
   setTimeout(() => {
     div.style.opacity = '0';
     div.style.transition = 'opacity 0.3s';
+
     setTimeout(() => div.remove(), 300);
   }, 3500);
 }
 
+
 function setRole(role) {
   const rcClient = document.getElementById('rcClient');
   const rcDriver = document.getElementById('rcDriver');
-  
   const driverExtra = document.getElementById('driverExtra');
 
   if (role === 'client') {
     rcClient?.classList.add('active');
     rcDriver?.classList.remove('active');
-    if (driverExtra) driverExtra.style.display = 'none';
+
+    if (driverExtra) {
+      driverExtra.style.display = 'none';
+    }
+
   } else {
     rcDriver?.classList.add('active');
     rcClient?.classList.remove('active');
-    if (driverExtra) driverExtra.style.display = 'block';
+
+    if (driverExtra) {
+      driverExtra.style.display = 'block';
+    }
   }
 }
 
+
 function togPass(inputId, btn) {
   const input = document.getElementById(inputId);
+
   if (!input) return;
-  
+
   if (input.type === 'password') {
     input.type = 'text';
     btn.textContent = '🔒';
@@ -403,28 +543,43 @@ function togPass(inputId, btn) {
   }
 }
 
+
 function validarEmail(email) {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(email);
 }
+
 
 function validarTelefone(tel) {
   const re = /^[0-9]{9,}$/;
   return re.test(tel.replace(/\s/g, ''));
 }
 
+
 function validarPassword(pass) {
   return pass && pass.length >= 8;
 }
 
+
 function verificarAutenticacao() {
   const usuario = localStorage.getItem('usuarioAtual');
+
   if (!usuario) {
     window.location.href = 'FRETEX.html';
     return null;
   }
-  return JSON.parse(usuario);
+
+  try {
+    return JSON.parse(usuario);
+  } catch (err) {
+    console.error('Dados de utilizador inválidos:', err);
+    localStorage.removeItem('usuarioAtual');
+    localStorage.removeItem('fx_token');
+    window.location.href = 'FRETEX.html';
+    return null;
+  }
 }
+
 
 function logout() {
   if (confirm('Tem a certeza que quer sair?')) {
@@ -434,27 +589,35 @@ function logout() {
   }
 }
 
+
 // ============================================================
 // 7. INICIALIZAÇÃO
 // ============================================================
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Os botões já usam onclick no HTML; não adicionar listeners duplicados.
 
-  // Enter key
+  // Enter no campo da password faz login
   document.getElementById('lPass')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') doLogin();
+    if (e.key === 'Enter') {
+      doLogin();
+    }
   });
 
+  // Enter no campo da password faz registo
   document.getElementById('rPass')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') doRegister();
+    if (e.key === 'Enter') {
+      doRegister();
+    }
   });
 
-  // Navegação entre campos de código (Enter passa ao próximo)
+  // Navegação entre os campos do código
   document.querySelectorAll('[data-code-digit]').forEach((input, idx) => {
+
     input.addEventListener('input', (e) => {
       if (e.target.value && idx < 5) {
-        document.querySelector(`[data-code-digit="${idx + 1}"]`)?.focus();
+        document
+          .querySelector(`[data-code-digit="${idx + 1}"]`)
+          ?.focus();
       }
     });
 
@@ -463,23 +626,30 @@ window.addEventListener('DOMContentLoaded', () => {
         verifyCode();
       }
     });
+
   });
-  // ============================================================
-  // Limpar erros ao focar
+
+  // Limpar erros quando o utilizador foca um campo
   document.querySelectorAll('input, select').forEach(el => {
+
     el.addEventListener('focus', () => {
       const errId = el.id + 'Err';
       const err = document.getElementById(errId);
-      if (err) err.style.display = 'none';
+
+      if (err) {
+        err.style.display = 'none';
+      }
     });
+
   });
 
-  console.log('✅ Auth carregado!');
+  console.log('Auth carregado com sucesso!');
 });
 
-// FUNÇÕES DE MODAL (faltavam)
-// ============================================================
 
+// ============================================================
+// 8. FUNÇÕES DE MODAL E NAVEGAÇÃO
+// ============================================================
 
 function switchTo(tab) {
   const pLogin = document.getElementById('pLogin');
@@ -489,71 +659,104 @@ function switchTo(tab) {
   const tabReg = document.getElementById('tabReg');
   const pVerify = document.getElementById('pVerify');
   const overlay = document.getElementById('overlay');
+
   if (pVerify) pVerify.style.display = 'none';
   if (tabs) tabs.style.display = 'flex';
+
   if (tab === 'register') {
     if (pLogin) pLogin.style.display = 'none';
     if (pReg) pReg.style.display = 'block';
+
     tabLogin?.classList.remove('active');
     tabReg?.classList.add('active');
-    document.getElementById('mhdrTitle')?.replaceChildren(document.createTextNode('Criar conta'));
-    document.getElementById('mhdrSub')?.replaceChildren(document.createTextNode('Regista-te em segundos'));
+
+    document.getElementById('mhdrTitle')
+      ?.replaceChildren(document.createTextNode('Criar conta'));
+
+    document.getElementById('mhdrSub')
+      ?.replaceChildren(document.createTextNode('Regista-te em segundos'));
+
   } else {
     if (pLogin) pLogin.style.display = 'block';
     if (pReg) pReg.style.display = 'none';
+
     tabLogin?.classList.add('active');
     tabReg?.classList.remove('active');
-    document.getElementById('mhdrTitle')?.replaceChildren(document.createTextNode('Bem-vindo'));
-    document.getElementById('mhdrSub')?.replaceChildren(document.createTextNode('Acede à tua conta FRETEX'));
+
+    document.getElementById('mhdrTitle')
+      ?.replaceChildren(document.createTextNode('Bem-vindo'));
+
+    document.getElementById('mhdrSub')
+      ?.replaceChildren(document.createTextNode('Acede à tua conta FRETEX'));
   }
-  if (overlay) overlay.classList.add('open');
+
+  if (overlay) {
+    overlay.classList.add('open');
+  }
 }
+
 
 function codeNext(input) {
   if (!input || !input.value) return;
+
   const idx = Number(input.dataset.idx);
-  const next = document.querySelector(`[data-group="verify"][data-idx="${idx + 1}"]`);
-  if (next) next.focus();
+
+  const next = document.querySelector(
+    `[data-group="verify"][data-idx="${idx + 1}"]`
+  );
+
+  if (next) {
+    next.focus();
+  }
 }
+
 
 function codeBack(event, input) {
   if (event.key === 'Backspace' && !input.value) {
     const idx = Number(input.dataset.idx);
-    const prev = document.querySelector(`[data-group="verify"][data-idx="${idx - 1}"]`);
-    if (prev) prev.focus();
+
+    const prev = document.querySelector(
+      `[data-group="verify"][data-idx="${idx - 1}"]`
+    );
+
+    if (prev) {
+      prev.focus();
+    }
   }
 }
 
-function resendCode() {
-  if (!_verifyEmail) return;
-  const hint = document.getElementById('codeDevHint');
-  _verifyCode = String(Math.floor(100000 + Math.random() * 900000));
-  localStorage.setItem('fx_verify_' + _verifyEmail, _verifyCode);
-  enviarEmailVerificacao(_verifyEmail, _verifyFirstName, _verifyCode, hint);
-}
 
 function doGoogle() {
-  mostrarAlerta('🔐 O login Google ainda não está configurado no servidor.', 'warning');
+  mostrarAlerta(
+    'O login Google ainda não está configurado no servidor.',
+    'warning'
+  );
 }
+
 
 function showModal(modalId) {
   const overlay = document.getElementById('overlay');
   const pLogin = document.getElementById('pLogin');
   const pReg = document.getElementById('pReg');
   const pVerify = document.getElementById('pVerify');
-  
+
   // Esconder todos os painéis
   if (pLogin) pLogin.style.display = 'none';
   if (pReg) pReg.style.display = 'none';
   if (pVerify) pVerify.style.display = 'none';
-  
+
   // Mostrar o painel solicitado
   const modal = document.getElementById(modalId);
-  if (modal) modal.style.display = 'block';
-  
-  // Adicionar classe 'open' ao overlay
-  if (overlay) overlay.classList.add('open');
+
+  if (modal) {
+    modal.style.display = 'block';
+  }
+
+  if (overlay) {
+    overlay.classList.add('open');
+  }
 }
+
 
 function closeModal() {
   const overlay = document.getElementById('overlay');
@@ -561,18 +764,23 @@ function closeModal() {
   const pReg = document.getElementById('pReg');
   const pVerify = document.getElementById('pVerify');
   const spanel = document.getElementById('spanel');
-  
-  // Esconder todos os painéis
+
+  // Esconder painéis
   if (pLogin) pLogin.style.display = 'none';
   if (pReg) pReg.style.display = 'none';
   if (pVerify) pVerify.style.display = 'none';
-  
-  // Remover classe 'open' do overlay
-  if (overlay) overlay.classList.remove('open');
-  
-  // Mostrar hero panel
-  if (spanel) spanel.style.display = 'block';
+
+  // Fechar modal
+  if (overlay) {
+    overlay.classList.remove('open');
+  }
+
+  // Mostrar painel principal
+  if (spanel) {
+    spanel.style.display = 'block';
+  }
 }
+
 
 function openModal(modalId) {
   if (modalId === 'driver') {
@@ -580,7 +788,16 @@ function openModal(modalId) {
     switchTo('register');
     return;
   }
-  if (modalId === 'pLogin') { switchTo('login'); return; }
-  if (modalId === 'pReg') { switchTo('register'); return; }
+
+  if (modalId === 'pLogin') {
+    switchTo('login');
+    return;
+  }
+
+  if (modalId === 'pReg') {
+    switchTo('register');
+    return;
+  }
+
   showModal(modalId);
 }
